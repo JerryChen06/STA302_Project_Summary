@@ -1,0 +1,368 @@
+---
+title: "Visualization of Correlations between possible predictors"
+---
+
+I extracted the description for each of the variable names of the CCHS dataset and matched them as an R vector. 
+```{r}
+#| code-fold: true
+#| code-summary: "If you guys ever need it here it is. Each column name of pumf_cchs.csv is matched here in order."
+#| eval: false
+dict <- c(
+  "VERDATE" = "Date of file creation", #[cite: 3]
+  "REFPER" = "Reference period", #[cite: 3]
+  "ADM_RNO" = "Sequential record number", #[cite: 3]
+  "COLMODE" = "Collection mode - 18+", #[cite: 3]
+  "COLMODEY" = "Collection mode 12-17 (youth respondents)", #[cite: 3]
+  "COLMODEP" = "Collection mode 12-17 (PMK respondents)", #[cite: 3]
+  "GEOGPRV" = "Province or territory of residence of respondent - (G)", #[cite: 3]
+  "GEODGHR4" = "Health region - (D, G)", #[cite: 3]
+  "DHHDGHSZ" = "Household size - Grouped", #[cite: 3]
+  "EDDVH3" = "Highest level of education - household, 3 levels - (D)", #[cite: 3]
+  "DHHGAGE" = "Age - (G)", #[cite: 3]
+  "DHH_SEX" = "Sex at birth", #[cite: 3]
+  "DOMAC" = "Main activity (1) Inclusion Flag - (F)", #[cite: 3]
+  "MAC_05" = "Main activity worked at job/business 12 mo", #[cite: 3]
+  "DOGEN" = "General health - Inclusion Flag - (F)", #[cite: 3]
+  "GEN_01" = "Perceived health", #[cite: 3]
+  "GEN_05" = "Perceived mental health", #[cite: 3]
+  "GEN_10" = "Perceived life stress", #[cite: 3]
+  "GEN_15" = "Perceived stress at work", #[cite: 3]
+  "GEN_20" = "Sense of belonging to local community", #[cite: 3]
+  "DOLSM" = "Life satisfaction measures - Inclusion Flag - (F)", #[cite: 3]
+  "LSM_01" = "Satisfaction with life in general", #[cite: 3]
+  "LSMDVSWL" = "Satisfaction with life in general - (D)", #[cite: 3]
+  "DOHWT" = "Height and weight - Inclusion Flag - (F)", #[cite: 3]
+  "HWTDGISW" = "BMI classification for adults (self-reported) - intl standard (D, G)", #[cite: 3]
+  "HWTDGWHO" = "BMI age 12 to 17 (self-reported) - WHO classification - (D, G)", #[cite: 3]
+  "HWTDGBCC" = "BMI classification for adults (adjusted) - intl standard - (D, G)", #[cite: 3]
+  "DOWTP" = "Weight perception - Inclusion Flag - (F)", #[cite: 3]
+  "WTP_50" = "Self-perceived weight - overweight / underweight / just about right", #[cite: 3]
+  "DOCOV2" = "COVID19 -(2) Inclusion Flag - (F)", #[cite: 3]
+  "COV2_005" = "Self-perceived mental health before / during pandemic", #[cite: 3]
+  "COV2_10A" = "COVID-19 precautions - washes hands more frequently", #[cite: 3]
+  "COV2_10B" = "COVID-19 precautions - wears a mask in public places", #[cite: 3]
+  "COV2_10C" = "COVID-19 precautions - keeps a 2 m / 6 ft distance from others", #[cite: 3]
+  "COV2_10D" = "COVID-19 precautions - avoids crowds / large gatherings", #[cite: 3]
+  "COV2_10E" = "COVID-19 precautions - avoids leaving house for non-essential reasons", #[cite: 3]
+  "COV2_10F" = "COVID-19 precautions - works from home", #[cite: 3]
+  "COV2_10G" = "COVID-19 precautions - uses delivery / curb side pick-up services", #[cite: 3]
+  "COV2_10H" = "COVID-19 precautions - self-isolates if symptoms", #[cite: 3]
+  "COV2_10I" = "COVID-19 precautions other precaution", #[cite: 3]
+  "COV2_10J" = "COVID-19 precautions no precautions taken", #[cite: 3]
+  "COV2_038" = "Received COVID-19 vaccine", #[cite: 3]
+  "COV2_030" = "COVID-19 vaccine requires 1 or 2 doses", #[cite: 3]
+  "COV2_035" = "COVID-19 vaccine number of doses received so far", #[cite: 3]
+  "COV2_041" = "COVID-19 vaccine main reason why not vaccinated", #[cite: 3]
+  "COV2_45A" = "COVID-19 vaccine - reasons don't want not at high risk", #[cite: 3]
+  "COV2_45B" = "COVID-19 vaccine reasons don't want won't be very sick", #[cite: 3]
+  "COV2_45C" = "COVID-19 vaccine - reasons don't want - pandemic severity overstated", #[cite: 3]
+  "COV2_45D" = "COVID-19 vaccine reasons don't want - vaccines are not effective", #[cite: 3]
+  "COV2_45E" = "COVID-19 vaccine reasons don't want vaccines are not safe", #[cite: 3]
+  "COV2_45F" = "COVID-19 vaccine reasons don't want don't trust its effectiveness", #[cite: 3]
+  "COV2_45G" = "COVID-19 vaccine - reasons don't want - don't trust its safety", #[cite: 3]
+  "COV2_45H" = "COVID-19 vaccine reasons don't want - philosophical / religious", #[cite: 3]
+  "COV2_45I" = "COVID-19 vaccine reasons don't want other reason", #[cite: 3]
+  "COV2_040" = "COVID-19 vaccine - likeliness of getting it", #[cite: 3]
+  "DOCOV3" = "COVID-19 (3) Inclusion Flag - (F)", #[cite: 3]
+  "COV3_005" = "COVID-19 vaccine - likeliness of getting additional dose if offered", #[cite: 3]
+  "DOCCC" = "Chronic conditions - Inclusion Flag - (F)", #[cite: 3]
+  "CCC_05" = "Has diabetes", #[cite: 4]
+  "CCC_80" = "Has high blood pressure", #[cite: 4]
+  "CCC_85" = "High blood pressure - took medication - 1 mo", #[cite: 4]
+  "CCC_90" = "Has had high blood cholesterol - lifetime", #[cite: 4]
+  "CCC_135" = "Has a mood disorder (depression, bipolar, mania, dysthymia)", #[cite: 4]
+  "CCCDGSKL" = "Musculoskeletal condition - (G)", #[cite: 4]
+  "CCCDGCAR" = "Cardiovascular condition (Heart disease or stroke) - (G)", #[cite: 4]
+  "DOCC1" = "Chronic conditions (1) Inclusion Flag - (F)", #[cite: 4]
+  "CC1_140" = "Has an anxiety disorder (phobia, panic, generalized anxiety)", #[cite: 4]
+  "CC1_145" = "Has post-traumatic stress disorder (PTSD)", #[cite: 4]
+  "CC1_155" = "Has chronic fatigue syndrome", #[cite: 4]
+  "CC1_170" = "Has multiple chemical sensitivities (MCS)", #[cite: 4]
+  "DOWDM" = "Abilities Inclusion Flag - (F)", #[cite: 4]
+  "WDMDGDIF" = "Difficulty Level of difficulty across domains - (G)", #[cite: 4]
+  "DOOHM" = "Oral health - Inclusion Flag - (F)", #[cite: 4]
+  "OHM_05" = "Perceived oral health", #[cite: 4]
+  "OHM_15" = "Persistent/on-going mouth pain frequency 12 mo", #[cite: 4]
+  "DOOHM3" = "Oral Health 3 Inicusion Flag - (F)", #[cite: 4]
+  "OHM3_05" = "Visit dental professional - frequency", #[cite: 4]
+  "OHM3_10" = "Visited dental professional - last time", #[cite: 4]
+  "OHM3_15" = "Avoided going to a dental professional due to cost - 12 mo", #[cite: 4]
+  "OHM3_18" = "Avoided having recommended dental treatment due to cost - 12 mo", #[cite: 4]
+  "OHM3_20A" = "Type dental treatment avoided due to cost check-ups/cleanings", #[cite: 4]
+  "OHM3_20B" = "Type dental treatment avoided due to cost - fillings", #[cite: 4]
+  "OHM3_20C" = "Type dental treatment avoided due to cost root canal treatment", #[cite: 4]
+  "OHM3_20D" = "Type dental treatment avoided due to cost tooth extraction", #[cite: 4]
+  "OHM3_20E" = "Type dental treatment avoided due to cost tooth replacement", #[cite: 4]
+  "OHM3_20F" = "Type dental treatment avoided due to cost no response provided", #[cite: 4]
+  "OHM3_45" = "Insurance - dental expenses all/part cost coverage", #[cite: 4]
+  "OHM3G50A" = "Type of dental insurance - private plan (G)", #[cite: 4]
+  "OHM3_50C" = "Type of insurance dental - government paid plan", #[cite: 4]
+  "OHM3_50E" = "Type of insurance dental - don't know", #[cite: 4]
+  "DOEAH" = "Eating habits - Inclusion Flag (F)", #[cite: 4]
+  "EAHG05" = "Ate food from a restaurant number of times 30 d - (G)", #[cite: 4]
+  "EAHDVCHO" = "Daily consumption - chocolate milk - (D)", #[cite: 4]
+  "EAHDVFFD" = "Daily consumption - fruit flavoured drinks or sports drinks - (D)", #[cite: 4]
+  "EAHDVFRU" = "Daily consumption - fruit - (D)", #[cite: 4]
+  "EAHDVGRN" = "Daily consumption - dark green vegetables - (D)", #[cite: 4]
+  "EAHDVJUI" = "Daily consumption - pure fruit juice - (D)", #[cite: 4]
+  "EAHDVORA" = "Daily consumption orange-coloured vegetables - (D)", #[cite: 4]
+  "EAHDVSCD" = "Daily consumption - sweetened coffee drinks or iced tea - (D)", #[cite: 4]
+  "EAHDVSOD" = "Daily consumption - regular soft drinks - (D)", #[cite: 4]
+  "EAHDVSTA" = "Daily consumption starchy vegetables - (D)", #[cite: 4]
+  "EAHDVVEG" = "Daily consumption other vegetables - (D)", #[cite: 4]
+  "EAHDVEND" = "Daily consumption energy drinks - (D)", #[cite: 4]
+  "EAHDVBVT" = "Daily consumption - beverages - (D)", #[cite: 4]
+  "EAHDVBVG" = "Grouping of total daily consumption - beverages - (D)", #[cite: 4]
+  "EAHDVFVT" = "Daily consumption - fruits and vegetables (D)", #[cite: 4]
+  "EAHDVFVG" = "Grouping of total daily consumption - fruits and vegetables - (D)", #[cite: 4]
+  "DOPAA" = "Physical activities adults Inclusion Flag (F)", #[cite: 4]
+  "PAA_05" = "Active transportation - 7 d", #[cite: 4]
+  "PAA_10A" = "Active transportation - Monday", #[cite: 4]
+  "PAA_10B" = "Active transportation - Tuesday", #[cite: 4]
+  "PAA_10C" = "Active transportation - Wednesday", #[cite: 4]
+  "PAA_10D" = "Active transportation - Thursday", #[cite: 4]
+  "PAA_10E" = "Active transportation - Friday", #[cite: 4]
+  "PAA_10F" = "Active transportation - Saturday", #[cite: 4]
+  "PAA_10G" = "Active transportation - Sunday", #[cite: 4]
+  "PAA_15A" = "Active transportation - 7 dtotal - hours", #[cite: 4]
+  "PAA_15B" = "Active transportation - 7d total - minutes", #[cite: 4]
+  "PAA_30" = "Sports/fitness / recreational physical act 7 d", #[cite: 4]
+  "PAA_35" = "Sports/fitness / recreational physical act sweat", #[cite: 4]
+  "PAA_40A" = "Sports/fitness / recreational physical act - Monday", #[cite: 4]
+  "PAA_40B" = "Sports/fitness/ recreational physical act - Tuesday", #[cite: 5]
+  "PAA_40C" = "Sports/fitness / recreational physical act - Wednesday", #[cite: 5]
+  "PAA_40D" = "Sports/fitness / recreational physical act - Thursday", #[cite: 5]
+  "PAA_40E" = "Sports/fitness / recreational physical act - Friday", #[cite: 5]
+  "PAA_40F" = "Sports/fitness / recreational physical act - Saturday", #[cite: 5]
+  "PAA_40G" = "Sports/fitness / recreational physical act - Sunday", #[cite: 5]
+  "PAA_45A" = "Sports/fitness / recreational physical act 7 d - total - hours", #[cite: 5]
+  "PAA_45B" = "Sports/fitness/ recreational physical act 7 dtotal minutes", #[cite: 5]
+  "PAA_60" = "Other physical activities - 7 d", #[cite: 5]
+  "PAA_65" = "Other physical activities - sweat", #[cite: 5]
+  "PAA_70A" = "Other physical activities - Monday", #[cite: 5]
+  "PAA_70B" = "Other physical activities Tuesday", #[cite: 5]
+  "PAA_70C" = "Other physical activities - Wednesday", #[cite: 5]
+  "PAA_70D" = "Other physical activities - Thursday", #[cite: 5]
+  "PAA_70E" = "Other physical activities - Friday", #[cite: 5]
+  "PAA_70F" = "Other physical activities - Saturday", #[cite: 5]
+  "PAA_70G" = "Other physical activities - Sunday", #[cite: 5]
+  "PAA_75A" = "Other physical activities 7d - total - hours", #[cite: 5]
+  "PAA_75B" = "Other physical activities 7 dtotal - minutes", #[cite: 5]
+  "PAA_95" = "Physical activities - vigorous intensity", #[cite: 5]
+  "PAA_100A" = "Physical activities - vigorous intensity 7 dtotal - hours", #[cite: 5]
+  "PAA_100B" = "Physical activities - vigorous intensity - 7 d- total - minutes", #[cite: 5]
+  "PAADVMVA" = "Total minutes moderate to vigorous physical activities - 7 d- (D)", #[cite: 5]
+  "PAADVACV" = "Physical activity indicator - (D)", #[cite: 5]
+  "PAADVAC2" = "Alternate physical activity indicator - (D)", #[cite: 5]
+  "PAADVVIG" = "Total minutes - vigorous physical activities - 7 d - (D)", #[cite: 5]
+  "PAADVVOL" = "Volume of weekly activity - 7d (METs*mins/week) - (D)", #[cite: 5]
+  "PAADVWHO" = "Physically active, based on WHO guidelines - (D)", #[cite: 5]
+  "DOUPE" = "Use of protective equipment - Inclusion Flag (F)", #[cite: 5]
+  "UPE_05" = "Bicycling 12 mo", #[cite: 5]
+  "UPE_10" = "Bicycling - helmet - frequency", #[cite: 5]
+  "UPE_15" = "Rollerblading 12 mo", #[cite: 5]
+  "UPE_20" = "Rollerblading - helmet frequency", #[cite: 5]
+  "UPE_25" = "Rollerblading - wrist protectors - frequency", #[cite: 5]
+  "UPE_30" = "Rollerblading elbow pads frequency", #[cite: 5]
+  "UPE_35" = "Rollerblading - knee pads frequency", #[cite: 5]
+  "UPE_40A" = "Downhill skiing - 12 mo.", #[cite: 5]
+  "UPE_45" = "Downhill skiing helmet - frequency", #[cite: 5]
+  "UPE_40B" = "Snowboarding - 12 mo", #[cite: 5]
+  "UPE_50" = "Snowboarding - helmet - frequency", #[cite: 5]
+  "UPE_55" = "Snowboarding wrist protectors - frequency", #[cite: 5]
+  "UPE_60A" = "Skateboarding - 12 mo", #[cite: 5]
+  "UPE_65" = "Skateboarding helmet frequency", #[cite: 5]
+  "UPE_70" = "Skateboarding - wrist protectors - frequency", #[cite: 5]
+  "UPE_75" = "Skateboarding elbow pads frequency", #[cite: 5]
+  "UPE_80" = "Ice hockey 12 mo", #[cite: 5]
+  "UPE_85" = "Ice hockey mouth guard - frequency", #[cite: 5]
+  "DOSBE" = "Sedentary behaviours - Inclusion Flag - (F)", #[cite: 5]
+  "SBE_005" = "Free time sitting/lying watching screen school/work day - 7d", #[cite: 5]
+  "SBE_010" = "Free time sitting/lying watching screen not school/work day7d", #[cite: 5]
+  "DOSLP" = "Sleep Inclusion Flag - (F)", #[cite: 5]
+  "SLPG005" = "Number of hours spent sleeping per night - (G)", #[cite: 5]
+  "SLP_010" = "Trouble going to sleep or staying asleep frequency", #[cite: 5]
+  "SLP_015" = "Refreshing sleep - frequency", #[cite: 5]
+  "SLP_020" = "Difficulty staying awake frequency", #[cite: 5]
+  "DOCSS" = "Current smoking status Inclusion Flag - (F)", #[cite: 5]
+  "CSS_05" = "Smoked a whole cigarette lifetime", #[cite: 5]
+  "CSS_15" = "Smoked more than 100 cigarettes - lifetime", #[cite: 5]
+  "CSSG20" = "Smoked - Frequency 30 days - (G)", #[cite: 5]
+  "CSS_25" = "Num of cigarettes smoked daily (daily smoker)", #[cite: 5]
+  "CSS_30" = "Num of cigarettes smoked daily (occasional smoker)", #[cite: 5]
+  "CSS_40" = "Made serious attempt to stop smoking 12 mo", #[cite: 5]
+  "DOSPU" = "Smoking past use Inclusion Flag - (F)", #[cite: 5]
+  "SPU_05" = "Smoked daily lifetime (occasional / former smoker)", #[cite: 6]
+  "SPU_20" = "Num of cigarettes smoked daily (former daily smoker)", #[cite: 6]
+  "SMKDVSTY" = "Smoking status (type 2) - traditional definition (D)", #[cite: 6]
+  "SMKDGYCS" = "Num. of years smoked daily (current daily smokers only) - (G)", #[cite: 6]
+  "SMKDGSTP" = "Number of years since stopping smoking completely - (G)", #[cite: 6]
+  "DOECV" = "Electronic cigarettes and vaping Inclusion Flag - (F)", #[cite: 6]
+  "ECV_05" = "Tried e-cigarette / vaping device - life", #[cite: 6]
+  "ECVG15" = "E-Cigarette - vaping device use - (G)", #[cite: 6]
+  "ECV_20" = "Used e-cigarette llast time nicotine", #[cite: 6]
+  "ECVDVSMK" = "E-Cigarette / vaping device and cigarette use (D)", #[cite: 6]
+  "DOECV2" = "Electronic cigarette and vaping 2- Inicusion Flag - (F)", #[cite: 6]
+  "ECV2G05A" = "Vape E-liquid with nicotine (G)", #[cite: 6]
+  "ECV2G05B" = "Vape E-liquid without nicotine - (G)", #[cite: 6]
+  "ECV2G05C" = "Vape - E-liquid with unknown content - (G)", #[cite: 6]
+  "ECV2_10" = "Tried to quit smoking with e-cigarette / vaping device - 12 mo", #[cite: 6]
+  "ECV2_15" = "Tried first - e-cigarette / vaping device or cigarette", #[cite: 6]
+  "DOALC" = "Alcohol use Inclusion Flag - (F)", #[cite: 6]
+  "ALC_05" = "Had a drink - lifetime", #[cite: 6]
+  "ALC_10" = "Drank alcohol - 12 mo", #[cite: 6]
+  "ALC_15" = "Drank alcohol - frequency 12 mo", #[cite: 6]
+  "ALC_20" = "Drank 5+/4+ drinks one occasion - frequency - 12 mo", #[cite: 6]
+  "ALCDVTTM" = "Type of drinker 12 months (D)", #[cite: 6]
+  "DOCAN" = "Cannabis use Inclusion Flag - (F)", #[cite: 6]
+  "CAN_05C" = "Used cannabis - 12 mo", #[cite: 6]
+  "CAN_35A" = "Used cannabis medical purpose pain 12 mo", #[cite: 6]
+  "CAN_35B" = "Used cannabis medical purpose nausea vomiting - 12 mo", #[cite: 6]
+  "CAN_35C" = "Used cannabis - medical purpose- lack of appetite - 12 mo", #[cite: 6]
+  "CAN_35D" = "Used cannabis - medical purpose- headaches / migraines - 12 mo", #[cite: 6]
+  "CAN_35E" = "Used cannabis medical purpose muscle spasms / seizures - 12 mo", #[cite: 6]
+  "CAN_35F" = "Used cannabis medical purpose- anxiety/depression 12 mo", #[cite: 6]
+  "CAN_35G" = "Used cannabis - medical purpose- symptoms of PTSD - 12 mo", #[cite: 6]
+  "CAN_35H" = "Used cannabis medical purpose- problems sleeping - 12 mo", #[cite: 6]
+  "CAN_35I" = "Used cannabis - purpose- opioid withdrawal symptoms - 12 mo", #[cite: 6]
+  "CAN_35J" = "Used cannabis medical purpose other 12 mo", #[cite: 6]
+  "CAN_40" = "Used cannabis - has a medical document for medical purposes use", #[cite: 6]
+  "DOFLU" = "Flu shots Inclusion Flag (F)", #[cite: 6]
+  "FLU_05" = "Had seasonal flu vaccine - 12 mo", #[cite: 6]
+  "FLU_10" = "Last seasonal flu vaccine - month", #[cite: 6]
+  "FLU_15" = "Last seasonal flu vaccine current / last year", #[cite: 6]
+  "FLU_20A" = "No flu vaccine 12 mo didn't think necessary", #[cite: 6]
+  "FLU_20B" = "No flu vaccine 12 mo concern about side effects", #[cite: 6]
+  "FLU_20C" = "No flu vaccine 12 moflu is not that severe", #[cite: 6]
+  "FLU_20D" = "No flu vaccine 12 moflu vaccine doesn't work", #[cite: 6]
+  "FLU_20E" = "No flu vaccine 12 mo previous bad reaction", #[cite: 6]
+  "FLU_20F" = "No flu vaccine 12 mo- other", #[cite: 6]
+  "DORHC" = "Regular health care provider - Inclusion Flag (F)", #[cite: 6]
+  "RHC_05" = "Regular health care provider", #[cite: 6]
+  "DOLMAM" = "Labour market activities - Inclusion Flag - (F)", #[cite: 6]
+  "LBFDGHPW" = "Total usual hours worked per week - (D, G)", #[cite: 6]
+  "LBFDVPFT" = "Full-time/part-time working status (for total usual hours) - (D)", #[cite: 6]
+  "LBFDGWSS" = "Working status last week (G)", #[cite: 6]
+  "SDCDGIMM" = "Immigigrant flag - (D, G)", #[cite: 6]
+  "SDCDVABT" = "Aboriginal Identity - (D)", #[cite: 6]
+  "SDCDVFLA" = "Visible minority flag - (D)", #[cite: 6]
+  "DOLAN" = "Language Inclusion Flag - (F)", #[cite: 6]
+  "DOINL" = "Insurance coverage (INL) - Inclusion Flag - (F)", #[cite: 6]
+  "INL_05" = "Insurance - long-term care costs all / part cost coverage", #[cite: 6]
+  "DOINP" = "Insurance coverage (INP) - Inclusion Flag - (F)", #[cite: 6]
+  "INP_05" = "Insurance - prescription medications - all / part cost coverage", #[cite: 6]
+  "DOPCN" = "Presciption cost - Inclusion Flag - (F)", #[cite: 6]
+  "PCN_05" = "Had prescriptions for medication - 12 mo", #[cite: 6]
+  "PCNDGCRA" = "Prescription Medication - Cost related non-adherence - (G)", #[cite: 6]
+  "DOFSC" = "Food security Inclusion Flag - (F)", #[cite: 6]
+  "FSCDVAF2" = "Food security adult status (including marginally) - (D)", #[cite: 7]
+  "FSCDVCF2" = "Food security child status (including marginally) - (D)", #[cite: 7]
+  "FSCDVHF2" = "Household food security status (including marginally) - (D)", #[cite: 7]
+  "INCDGHH" = "Total Household Income - All Sources - (D, G)", #[cite: 7]
+  "INCDGRCA" = "Distribution of household income - National level - (D, G)", #[cite: 7]
+  "INCDGRPR" = "Distribution of household income - Provincial level - (D, G)", #[cite: 7]
+  "INCDGRRS" = "Distribution of household income Health region level (D, G)", #[cite: 7]
+  "WTS_M" = "Weights - Master" #[cite: 7]
+)
+```
+
+The analysis I've done so far is a little involved, so I decided to type this quarto doc to summarize it. For my research I've generated a LOT of analyses similar to this, so I figured I may as well apply the same tools for our initial exploratory analysis. I'll try to explain each figure as best I can, but I apologize if it's confusing. 
+
+The following heatmap was constructed as follows: Each row and column represents one of the predictors from the CCHS dataset (i.e. the elements of the vector above). The intersection between them represents the correlation between the two predictors (red = closer to 1, blue = closer to -1). For example, the diagonal is all 1 because the correlation between a predictor and itself is always 1. I first did this across all predictors that had more than 1 unique value, since predictors that take on only one value wouldn't be interesting to find correlations with. I then "clustered" the values, which basically means sorting the rows and columns based on how similar they are to each other. This creates "clusters" of predictors that share similar values to each other, which will look like chunks of red and blue. 
+
+![full_predictor_heatmap](predictor_corr.png)
+
+This heatmap isn't super interpretable immediately because of the size (234x234). But there are a few things that are potentially useful. 
+
+Firstly, notice the huge red chunks. These are groups of predictors that have basically the same correlation patterns. When we zoom in and look at the members of each cluster, it makes sense because a lot of them are part of the same group. For example, daily consumption of various foods/beverages. This means two things:
+
+1. We can "collapse" this chunk into just a single chunk called "Daily Consumption of Foods" taking the average correlations, and replot the heatmap. The heatmap will become more interpretable without losing much data.
+2. We can look at JUST this cluster, and investigate how each predictor interacts with each other. Since we know there are underlying relationships between them, it may be interesting to see which relationships are the "true" drivers of the correlation. The best example I can think of is the correlation between daily consumption of fruit and daily consumption of energy drinks. These are highly correlated numerically, but if we were to run regression on this with other predictors, we may see that there is actually little relationship. The most likely predictors by which this would work would likely be other predictors in the cluster, such as exercise or physical activity (which is actually grouped together in the first big red cluster). 
+
+Secondly, notice how there are various correlations between each cluster. After we compress each cluster into a core "identity", we can better interpret the correlations between variables that aren't *extremely* similar. For example, we see that one of the last clusters is pretty highly correlated with the middle clusters, which corresponds to aerobic sport activity and COVID19 vaccination precautions, which seems pretty disconnected. Of course we can't conclude that they're actually connected, but they may be interesting predictors to consider. 
+
+Lastly, if we are interested in a specific response (e.g. Health index), we can just look at that row/column, and look at what is correlation and anticorrelated. This can help us figure out potential predictors to include in the analysis. 
+
+Sorry if this was really dense lmao, if anything here is confusing or if you think I made a mistake, please lmk and we can also talk abt this when we meet. I just figure some of these might be helpful. 
+
+```{r}
+#| code-fold: true
+#| code-summary: "All of my code is here if you guys wanna see it. "
+#| eval: false
+
+library(tidyverse)
+library(viridis)
+library(circlize)
+library(ComplexHeatmap)
+
+pumf <- read_csv(
+    "/Users/jerrychen/Desktop/Stats Final Project/Datasets/CSV/Data_Données/pumf_cchs.csv"
+)
+
+dict <- c(...) # See above. Not including it here so that the code isn't cluttered. 
+
+# Here, I'm just computing the total number of unique values each predictor takes. For example, categorical and discrete variables would only take a few unique values, whereas continuous variables would take thousands of unique values. 
+unique_values <- pumf |> 
+  summarize(across(everything(), n_distinct)) |> 
+  t() 
+
+colnames(unique_values) <- "num_unique_val"
+
+# The idea here is that any predictor that takes on only 1 value is not interesting, so I just filtered them out here. 
+non_variables <- rownames(data.frame(unique_values) |> filter(num_unique_val == 1))
+
+# Heatmap: Predictor x Predictor, coloured by correlation. 
+visualize_correlation_matrix <- function(df, column_ids) {
+  
+  # Selecting just the column_ids
+  subset <- df[, column_ids] 
+  
+
+  corr_mat <- cor(subset) 
+  
+  rownames(corr_mat) <- dict[rownames(corr_mat)] # Matching rownames to the description for easier interpretation
+
+  # My PI gave me this colour scheme. Blue is more negative and Red is more positive
+  cols = c("#2166ac",
+             "#4393c3",
+             "#92c5de", 
+             "#d1e5f0",
+             "#f7f7f7",
+             "#fddbc7",
+             "#f4a582",
+             "#d6604d",
+             "#b2182b")
+  sim_col <- circlize::colorRamp2(seq(-1, 1, length.out = length(cols)), cols)
+
+  # This is from the ComplexHeatmap package. This section just creates the heatmap, clusters it, and saves it. 
+
+  ht <- Heatmap(
+    corr_mat,
+    col = sim_col,
+    show_row_dend = FALSE,
+    show_column_dend = FALSE,
+    show_heatmap_legend = FALSE
+  )
+
+  png(
+    "predictor_corr.png", 
+    width = 40,
+    height = 40,
+    units = "in",
+    res = 250
+  )
+  
+  draw(ht)
+  
+  dev.off()
+
+  return(rownames(corr_mat)[row_order(draw(ht))])
+  
+}
+
+# column_ids here is just all of the predictors (colnames) EXCEPT for the variables that only take one value (non_variables). This created the heatmap above
+visualize_correlation_matrix(
+    df = pumf, 
+    column_ids = setdiff(colnames(pumf), non_variables)
+)
+```
